@@ -1,0 +1,1 @@
+../../upstream/NvApiDriverSettings.h
