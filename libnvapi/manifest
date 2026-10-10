@@ -1,16 +1,17 @@
 : 1
 name: libnvapi
-version: 0.1.0-a.0.z
+version: 615.0.0-a.0.z
+upstream-version: R615
 type: lib,binless
 language: c
-project: build2-nvapi
-summary: NVAPI SDK
-license: other: proprietary ; Not free/open source.
+project: nvidia-nvapi
+summary: The C headers for NVAPI, NVIDIA's API for GPU and driver features
+topics: nvidia, nvapi, gpu, driver, c
+license: MIT ; MIT License.
 description-file: README.md
 package-description-file: PACKAGE-README.md
-url: https://example.org/upstream
-email: upstream@example.org
-package-url: https://github.com/build2-packaging/build2-nvapi
+url: https://github.com/NVIDIA/nvapi
+package-url: https://github.com/build2-packaging/nvidia-nvapi
 package-email: packaging@build2.org ; Mailing list.
 depends: * build2 >= 0.18.0
 depends: * bpkg >= 0.18.0
