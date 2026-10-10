@@ -18,6 +18,12 @@ lib{nvapi}:
   c.export.libs = $intf_libs
 }
 
+# Upstream's own switch for compilers without Microsoft SAL: it keeps the
+# fallback SAL macros defined across all of the headers.
+#
+if ($c.target.system == 'mingw32')
+  lib{nvapi}: c.export.poptions += -D__NVAPI_EMPTY_SAL
+
 # Install recreating subdirectories.
 #
 h{*}:
