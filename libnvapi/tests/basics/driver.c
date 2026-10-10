@@ -1,73 +1,61 @@
-#include <stdio.h>
-#include <errno.h>
 #include <string.h>
 
-#include <nvapi.h>
+#include <nvapi_interface.h>
+#include <nvShaderExtnEnums.h>
+
+/* The NVAPI declarations only target Windows (see nvapi.h).
+ */
+#ifdef _WIN32
+#  include <nvapi.h>
+#  include <NvApiDriverSettings.h>
+#endif
 
 #undef NDEBUG
 #include <assert.h>
 
-#ifdef _WIN32
-#define tmpfile mytmpfile
-static FILE *mytmpfile ();
-#endif
-
-int main ()
+int main (void)
 {
-  char b[256];
-
-  /* Basics.
+  /* The interface table maps function names to the IDs that
+   * nvapi_QueryInterface() resolves at runtime.
    */
   {
-    FILE *o = tmpfile ();
-    assert (say_hello (o, "World") > 0);
-    rewind (o);
-    assert (fread (b, 1, sizeof (b), o) == 14 &&
-            strncmp (b, "Hello, World!\n", 14) == 0);
-    fclose (o);
+    unsigned int id = 0;
+    size_t n = sizeof (nvapi_interface_table) /
+               sizeof (nvapi_interface_table[0]);
+    size_t i;
+
+    assert (n != 0);
+
+    for (i = 0; i != n; ++i)
+    {
+      if (strcmp (nvapi_interface_table[i].func, "NvAPI_Initialize") == 0)
+      {
+        id = nvapi_interface_table[i].id;
+        break;
+      }
+    }
+
+    assert (id == 0x0150e828);
   }
 
-  /* Empty name.
-   */
+  assert (NV_EXTN_OP_SHFL == 1);
+
+#ifdef _WIN32
   {
-    FILE *o = tmpfile ();
-    assert (say_hello (o, "") < 0 && errno == EINVAL);
-    fclose (o);
+    NvAPI_Status s = NVAPI_OK;
+    NvAPI_ShortString str;
+    NV_DISPLAY_DRIVER_MEMORY_INFO_V1 mi;
+
+    assert (s == 0);
+    assert (sizeof (str) == NVAPI_SHORT_STRING_MAX);
+
+    memset (&mi, 0, sizeof (mi));
+    mi.version = NV_DISPLAY_DRIVER_MEMORY_INFO_VER_1;
+    assert ((mi.version & 0xffff) == sizeof (mi) && (mi.version >> 16) == 1);
+
+    assert (VSYNCMODE_ID == 0x00A879CF);
   }
+#endif
 
   return 0;
 }
-
-#ifdef _WIN32
-#include <windows.h>
-#include <fcntl.h>
-#include <io.h>
-
-FILE *mytmpfile ()
-{
-  char d[MAX_PATH + 1], p[MAX_PATH + 1];
-  if (GetTempPathA (sizeof (d), d) == 0 ||
-      GetTempFileNameA (d, "tmp", 0, p) == 0)
-    return NULL;
-
-  HANDLE h = CreateFileA (p,
-                          GENERIC_READ | GENERIC_WRITE,
-                          0,
-                          NULL,
-                          CREATE_ALWAYS,
-                          FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-                          NULL);
-  if (h == INVALID_HANDLE_VALUE)
-    return NULL;
-
-  int fd = _open_osfhandle ((intptr_t) h, _O_RDWR);
-  if (fd == -1)
-    return NULL;
-
-  FILE *f = _fdopen (fd, "wb+");
-  if (f == NULL)
-    _close (fd);
-
-  return f;
-}
-#endif
